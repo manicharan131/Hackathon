@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Prescription Verifier</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #e1bee7);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      text-align: center;
+      width: 420px;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #4a148c;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 15px auto;
+      border: 1px solid #ccc;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button {
+      background: #4a148c;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #6a1b9a;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f1f8e9;
+      text-align: left;
+      font-size: 13px;
+      color: #2e7d32;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #ffebee;
+      color: #c62828;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Prescription Verifier</h1>
+    <p>Upload a prescription (jpg/png). The backend does OCR + NER and checks drugs against a small DB.</p>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload & Verify</button>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      const output = document.getElementById("output");
+      output.innerHTML = "⏳ Processing...";
+
+      if (fileInput.files.length === 0) {
+        output.innerHTML = "<div class='error'>Please select a file first.</div>";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/upload-prescription/", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.detail || "Unknown error");
+        }
+
+        const data = await response.json();
+        output.innerHTML = "<div class='result'>" + JSON.stringify(data, null, 2) + "</div>";
+      } catch (err) {
+        output.innerHTML = "<div class='error'>❌ Error: " + err.message + "</div>";
+      }
+    }
+  </script>
+</body>
+</html>
